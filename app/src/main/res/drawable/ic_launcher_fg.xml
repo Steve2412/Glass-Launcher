@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Panel de cristal -->
+    <path
+        android:fillColor="#40FFFFFF"
+        android:strokeColor="#B3FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M38,34h32a8,8 0,0 1,8 8v24a8,8 0,0 1,-8 8h-32a8,8 0,0 1,-8 -8v-24a8,8 0,0 1,8 -8z" />
+    <!-- Dock -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,62h36a3,3 0,0 1,3 3v2a3,3 0,0 1,-3 3h-36a3,3 0,0 1,-3 -3v-2a3,3 0,0 1,3 -3z" />
+    <!-- Reloj -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M37,41h14v6h-14z" />
+</vector>
