@@ -31,6 +31,8 @@ class PhoneRepository(private val context: Context) {
 
     private var started = false
     private var device: BluetoothDevice? = null
+    private val profileDevices = HashMap<Int, List<String>>()
+    private var lastEvent: String = "(ninguno)"
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, intent: Intent?) {
@@ -47,8 +49,24 @@ class PhoneRepository(private val context: Context) {
                     val level = intent.getIntExtra(EXTRA_BATTERY, -1)
                     _state.value = _state.value.copy(battery = level.takeIf { it in 0..100 })
                 }
+                // Batería que el iPhone informa por manos libres (HFP): escala 0–5
+                HFP_AG_EVENT -> {
+                    val level = intent.getIntExtra(HFP_EXTRA_BATTERY, -1)
+                    if (d != null && device == null) setDevice(d)
+                    if (level in 0..5) _state.value = _state.value.copy(battery = level * 20)
+                }
+                HFP_CONNECTION, A2DP_SINK_CONNECTION -> {
+                    val st = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1)
+                    if (d != null && st == BluetoothProfile.STATE_CONNECTED) setDevice(d)
+                    if (d != null && st == BluetoothProfile.STATE_DISCONNECTED && d.address == device?.address) {
+                        device = null
+                        _state.value = PhoneState()
+                        queryProfiles()
+                    }
+                }
                 BluetoothAdapter.ACTION_STATE_CHANGED -> queryProfiles()
             }
+            lastEvent = "${intent.action?.substringAfterLast('.')} ${intent.extras?.keySet()?.joinToString(",") { it.substringAfterLast('.') }}"
         }
     }
 
@@ -65,6 +83,9 @@ class PhoneRepository(private val context: Context) {
                 addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
                 addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
                 addAction(ACTION_BATTERY)
+                addAction(HFP_AG_EVENT)
+                addAction(HFP_CONNECTION)
+                addAction(A2DP_SINK_CONNECTION)
             }
             ContextCompat.registerReceiver(context, receiver, f, ContextCompat.RECEIVER_EXPORTED)
         } catch (_: Exception) {
@@ -81,7 +102,9 @@ class PhoneRepository(private val context: Context) {
                 a.getProfileProxy(context, object : BluetoothProfile.ServiceListener {
                     override fun onServiceConnected(p: Int, proxy: BluetoothProfile?) {
                         try {
-                            val d = proxy?.connectedDevices?.firstOrNull()
+                            val list = proxy?.connectedDevices.orEmpty()
+                            profileDevices[p] = list.map { safeName(it) }
+                            val d = list.firstOrNull()
                             if (d != null && device == null) setDevice(d)
                         } catch (_: Exception) {
                         }
@@ -105,7 +128,36 @@ class PhoneRepository(private val context: Context) {
         } catch (e: Exception) {
             null
         }
-        _state.value = PhoneState(connected = true, name = name, battery = readBattery(d))
+        val same = _state.value.connected && _state.value.name == name
+        _state.value = PhoneState(connected = true, name = name, battery = readBattery(d) ?: if (same) _state.value.battery else null)
+    }
+
+    private fun safeName(d: BluetoothDevice): String = try {
+        d.name ?: d.address
+    } catch (e: Exception) {
+        "?"
+    }
+
+    fun diagnostics(): List<String> {
+        val a = adapter
+        val lines = mutableListOf<String>()
+        lines.add("Permiso Bluetooth: ${if (hasPermission()) "sí" else "NO"}")
+        if (a == null) {
+            lines.add("Android no expone un adaptador Bluetooth (módulo propio de la pantalla)")
+            return lines
+        }
+        try {
+            lines.add("Adaptador encendido: ${if (a.isEnabled) "sí" else "no"}")
+            lines.add("Emparejados: " + (a.bondedDevices?.joinToString { safeName(it) }?.ifEmpty { "(ninguno)" } ?: "(ninguno)"))
+        } catch (e: Exception) {
+            lines.add("No se pudo leer el adaptador: ${e.javaClass.simpleName}")
+        }
+        val names = mapOf(11 to "A2DP receptor", 16 to "Manos libres (HFP)", BluetoothProfile.A2DP to "A2DP", BluetoothProfile.HEADSET to "Auricular")
+        names.forEach { (p, n) -> lines.add("$n: ${profileDevices[p]?.joinToString()?.ifEmpty { "nadie" } ?: "sin datos"}") }
+        lines.add("Teléfono detectado: ${_state.value.name ?: "no"} · batería ${_state.value.battery ?: "?"}")
+        lines.add("Último evento: $lastEvent")
+        if (!started) queryProfiles()
+        return lines
     }
 
     private fun isPhone(d: BluetoothDevice): Boolean = try {
@@ -137,5 +189,9 @@ class PhoneRepository(private val context: Context) {
     companion object {
         const val ACTION_BATTERY = "android.bluetooth.device.action.BATTERY_LEVEL_CHANGED"
         const val EXTRA_BATTERY = "android.bluetooth.device.extra.BATTERY_LEVEL"
+        const val HFP_AG_EVENT = "android.bluetooth.headsetclient.profile.action.AG_EVENT"
+        const val HFP_EXTRA_BATTERY = "android.bluetooth.headsetclient.extra.BATTERY_LEVEL"
+        const val HFP_CONNECTION = "android.bluetooth.headsetclient.profile.action.CONNECTION_STATE_CHANGED"
+        const val A2DP_SINK_CONNECTION = "android.bluetooth.a2dp-sink.profile.action.CONNECTION_STATE_CHANGED"
     }
 }

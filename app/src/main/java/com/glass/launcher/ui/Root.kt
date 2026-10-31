@@ -75,6 +75,9 @@ fun GlassRoot(state: LauncherState) {
                 ) {
                     SettingsScreen(state)
                 }
+                AnimatedVisibility(state.screen == Screen.DIAG, enter = fadeIn(), exit = fadeOut()) {
+                    DiagnosticsScreen(state)
+                }
                 SheetHost(state)
             }
         }

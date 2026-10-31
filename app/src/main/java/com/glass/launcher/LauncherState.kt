@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.ceil
 
-enum class Screen { HOME, LIBRARY, SETTINGS }
+enum class Screen { HOME, LIBRARY, SETTINGS, DIAG }
 
 /** Ventanas emergentes (menús y selectores) que se muestran sobre el launcher. */
 sealed interface Sheet {
@@ -171,6 +171,7 @@ class LauncherState(private val context: Context) {
     fun back() {
         when {
             sheet != null -> sheet = null
+            screen == Screen.DIAG -> screen = Screen.SETTINGS
             screen != Screen.HOME -> screen = Screen.HOME
         }
     }

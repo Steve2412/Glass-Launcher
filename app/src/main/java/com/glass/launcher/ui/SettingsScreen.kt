@@ -229,6 +229,12 @@ private fun OptionsPanel(state: LauncherState, modifier: Modifier) {
             onClick = { state.toggleArtworkOnline() },
             trailing = { GlassSwitch(state.artworkOnline) },
         )
+        SettingRow(
+            "Diagnóstico de música y Bluetooth",
+            "Muestra por dónde llegan la canción y la batería",
+            onClick = { state.screen = com.glass.launcher.Screen.DIAG },
+            leading = { Glyph(Glyphs.info, 22.dp) },
+        )
         if (state.artworkOnline) {
             SettingRow(
                 "Solo con WiFi",
