@@ -242,8 +242,14 @@ private fun HomeItemView(state: LauncherState, item: HomeItem) {
             if (app != null) {
                 AppTile(state, app, 82.dp, onClick = { state.launch(app) }, onLongClick = menu)
             } else if (apps.isNotEmpty()) {
-                // La app fue desinstalada
-                LaunchedEffect(item.id) { state.removeItem(item) }
+                // La app no está (desinstalada o actualizándose): se puede quitar con pulsación larga
+                Box(
+                    Modifier
+                        .size(82.dp)
+                        .clip(com.glass.launcher.icons.SquircleShape)
+                        .background(Color.White.copy(alpha = 0.1f))
+                        .longPressOnly(menu)
+                )
             }
         }
         HomeType.WIDGET -> HostedWidget(state, item, menu)
