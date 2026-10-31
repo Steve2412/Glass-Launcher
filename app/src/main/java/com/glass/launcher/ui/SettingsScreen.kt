@@ -176,14 +176,14 @@ private fun OptionsPanel(state: LauncherState, modifier: Modifier) {
         SettingRow(
             "Glass (integrado)", "Estilo iOS con brillo y cristal",
             selected = state.iconStyle == "glass",
-            onClick = { state.setIconStyle("glass") },
+            onClick = { state.chooseIconStyle("glass") },
             leading = { GlyphIcon(Glyphs.music, Color(0xFFFF8FA8), Color(0xFFF0284F), 48.dp) },
             trailing = { RadioDot(state.iconStyle == "glass") },
         )
         SettingRow(
             "Iconos originales", "El icono de cada app, sin cambios",
             selected = state.iconStyle == "original",
-            onClick = { state.setIconStyle("original") },
+            onClick = { state.chooseIconStyle("original") },
             leading = { GlyphIcon(Glyphs.music, Color(0xFF3C4458), Color(0xFF1F2433), 48.dp) },
             trailing = { RadioDot(state.iconStyle == "original") },
         )
@@ -191,7 +191,7 @@ private fun OptionsPanel(state: LauncherState, modifier: Modifier) {
             SettingRow(
                 p.label, "Pack de iconos instalado",
                 selected = state.iconStyle == p.pkg,
-                onClick = { state.setIconStyle(p.pkg) },
+                onClick = { state.chooseIconStyle(p.pkg) },
                 leading = { GlyphIcon(Glyphs.image, Color(0xFFFFD36B), Color(0xFFFF8A3D), 48.dp) },
                 trailing = { RadioDot(state.iconStyle == p.pkg) },
             )

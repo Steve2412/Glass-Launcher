@@ -296,7 +296,7 @@ class LauncherState(private val context: Context) {
         wallpaperImages = imgs
     }
 
-    fun setIconStyle(style: String) {
+    fun chooseIconStyle(style: String) {
         iconStyle = style
         prefs.iconStyle = style
         icons.configure(iconStyle, packFrame, iconOverrides)
