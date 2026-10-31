@@ -12,7 +12,7 @@ Launcher estilo iOS (Liquid Glass) para pantallas Android de auto de 1280×720.
 ## Descargar el APK
 
 Cada push a `main` compila el APK en **Actions › Build APK › Artifacts** (`GlassLauncher-apk`).
-Si creas un tag `v1.0`, el APK también queda publicado en **Releases**.
+Además, cada build de `main` publica el APK en **Releases** (el más reciente queda como "Latest").
 
 El APK está firmado con una llave fija (`app/glass-debug.keystore`), así que las versiones nuevas se instalan encima de la anterior sin perder la configuración.
 
