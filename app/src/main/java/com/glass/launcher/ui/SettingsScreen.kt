@@ -172,6 +172,24 @@ private fun OptionsPanel(state: LauncherState, modifier: Modifier) {
             .padding(horizontal = 18.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        ProfileSection(state)
+
+        Spacer(Modifier.height(10.dp))
+        SectionTitle("Barra del sistema (atrás, inicio, multitarea)")
+        listOf(
+            Triple("transparent", "Transparente", "Los botones quedan sobre el fondo, sin franja negra"),
+            Triple("hidden", "Oculta (pantalla completa)", "Desliza desde el borde superior para verla un momento"),
+            Triple("normal", "Normal", "Franja negra como el launcher original"),
+        ).forEach { (id, title, sub) ->
+            SettingRow(
+                title, sub,
+                selected = state.barMode == id,
+                onClick = { state.chooseBarMode(id) },
+                trailing = { RadioDot(state.barMode == id) },
+            )
+        }
+
+        Spacer(Modifier.height(10.dp))
         SectionTitle("Paquete de iconos")
         SettingRow(
             "Glass (integrado)", "Estilo iOS con brillo y cristal",
@@ -248,12 +266,69 @@ private fun OptionsPanel(state: LauncherState, modifier: Modifier) {
         SectionTitle("Inicio y sistema")
         SettingRow("Añadir widget", "Widgets del launcher o de tus apps", onClick = { state.sheet = com.glass.launcher.Sheet.WidgetPicker }, leading = { Glyph(Glyphs.widget, 22.dp) })
         SettingRow("Añadir app al inicio", onClick = { state.sheet = com.glass.launcher.Sheet.PickApp(com.glass.launcher.PickPurpose.AddToHome) }, leading = { Glyph(Glyphs.plus, 22.dp) })
-        SettingRow(
-            "Pantalla completa",
-            "Oculta la barra del sistema (desliza desde el borde para verla)",
-            onClick = { state.toggleImmersive() },
-            trailing = { GlassSwitch(state.immersive) },
-        )
         SettingRow("Launcher predeterminado", "Elegir Glass Launcher como pantalla de inicio", onClick = { state.openDefaultLauncherSettings() }, leading = { Glyph(Glyphs.home, 22.dp) })
+    }
+}
+
+// ---------------------------------------------------------------- Perfil
+
+@Composable
+private fun ProfileSection(state: LauncherState) {
+    val context = LocalContext.current
+    val pickVehicle = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) state.setVehiclePhoto(uri)
+    }
+    val photo by produceState<ImageBitmap?>(null, state.vehicleVersion) {
+        value = withContext(Dispatchers.IO) { com.glass.launcher.data.Vehicle.load(context)?.asImageBitmap() }
+    }
+    SectionTitle("Perfil")
+    Column(Modifier.padding(horizontal = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        GlassTextField("Tu nombre", state.userName) { state.changeUserName(it) }
+        Txt(
+            "${com.glass.launcher.data.Vehicle.greeting()}, ${state.userName.ifBlank { "Conductor" }} · el saludo cambia solo con la hora",
+            13.sp, color = GlassColors.textDim, maxLines = 2,
+        )
+        Txt("Foto del vehículo", 15.sp, FontWeight.SemiBold)
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .width(200.dp)
+                    .height(120.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.White.copy(alpha = 0.07f))
+                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                photo?.let { Image(it, contentDescription = "Vehículo", contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize()) }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                PillButton("Cambiar foto") { pickVehicle.launch("image/*") }
+                PillButton("Usar Aveo 2007") { state.resetVehiclePhoto() }
+            }
+        }
+        Txt("Mejor una imagen PNG sin fondo, con el auto mirando a la izquierda.", 13.sp, color = GlassColors.textDim, maxLines = 2)
+        GlassTextField("Nombre del vehículo", state.vehicleName) { state.changeVehicleName(it) }
+    }
+}
+
+@Composable
+private fun GlassTextField(label: String, value: String, onChange: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Txt(label, 15.sp, FontWeight.SemiBold)
+        androidx.compose.foundation.text.BasicTextField(
+            value = value,
+            onValueChange = { onChange(it.take(30)) },
+            singleLine = true,
+            textStyle = androidx.compose.ui.text.TextStyle(color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.SemiBold),
+            cursorBrush = androidx.compose.ui.graphics.SolidColor(Color.White),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White.copy(alpha = 0.10f))
+                .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+        )
     }
 }

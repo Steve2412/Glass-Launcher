@@ -14,7 +14,7 @@ data class AppEntry(
     val component: ComponentName get() = ComponentName(pkg, cls)
 }
 
-enum class HomeType { MUSIC, PHONE, APP, WIDGET, SETTINGS }
+enum class HomeType { MUSIC, PHONE, APP, WIDGET, SETTINGS, VEHICLE }
 
 /** Un elemento colocado en la pantalla de inicio. */
 data class HomeItem(

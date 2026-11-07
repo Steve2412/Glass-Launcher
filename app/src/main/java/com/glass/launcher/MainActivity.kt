@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.graphics.Color
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -48,7 +49,7 @@ class MainActivity : ComponentActivity() {
         state.addWidgetHandler = { info -> startAddWidget(info) }
         setContent {
             LaunchedEffect(Unit) {
-                snapshotFlow { state.immersive }.collect { applyImmersive(it) }
+                snapshotFlow { state.barMode }.collect { applyBarMode(it) }
             }
             GlassRoot(state)
         }
@@ -69,7 +70,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         state.media.refreshAccess()
         state.phone.start()
-        applyImmersive(state.immersive)
+        applyBarMode(state.barMode)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -90,9 +91,26 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun applyImmersive(on: Boolean) {
+    /**
+     * transparent: el launcher se dibuja detrás de las barras del sistema y estas quedan transparentes.
+     * hidden: pantalla completa (las barras aparecen un momento al deslizar desde el borde).
+     * normal: barras negras como el launcher original.
+     */
+    @Suppress("DEPRECATION")
+    private fun applyBarMode(mode: String) {
         val controller = WindowCompat.getInsetsController(window, window.decorView)
-        if (on) {
+        val edgeToEdge = mode != "normal"
+        WindowCompat.setDecorFitsSystemWindows(window, !edgeToEdge)
+        val barColor = if (edgeToEdge) Color.TRANSPARENT else Color.BLACK
+        window.statusBarColor = barColor
+        window.navigationBarColor = barColor
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isStatusBarContrastEnforced = false
+            window.isNavigationBarContrastEnforced = false
+        }
+        controller.isAppearanceLightStatusBars = false
+        controller.isAppearanceLightNavigationBars = false
+        if (mode == "hidden") {
             controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             controller.hide(WindowInsetsCompat.Type.systemBars())
         } else {

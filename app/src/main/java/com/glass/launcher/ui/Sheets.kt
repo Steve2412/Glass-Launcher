@@ -138,6 +138,7 @@ private fun ItemMenu(state: LauncherState, s: Sheet.ItemMenu) {
         HomeType.MUSIC -> "Widget de música"
         HomeType.PHONE -> "Widget del teléfono"
         HomeType.SETTINGS -> "Personalizar"
+        HomeType.VEHICLE -> "Mi auto"
         HomeType.APP -> apps.firstOrNull { it.key == item.appKey }?.label ?: "App"
         HomeType.WIDGET -> state.widgets.info(item.widgetId)?.loadLabel(LocalContext.current.packageManager) ?: "Widget"
     }
@@ -259,6 +260,7 @@ private fun WidgetPicker(state: LauncherState) {
     val hasMusic = state.home.any { it.type == HomeType.MUSIC }
     val hasPhone = state.home.any { it.type == HomeType.PHONE }
     val hasSettings = state.home.any { it.type == HomeType.SETTINGS }
+    val hasVehicle = state.home.any { it.type == HomeType.VEHICLE }
 
     Panel(960.dp) {
         Column(Modifier.heightIn(max = 600.dp)) {
@@ -266,6 +268,7 @@ private fun WidgetPicker(state: LauncherState) {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Txt("DEL LAUNCHER", 13.sp, FontWeight.SemiBold, color = GlassColors.textDim, letterSpacing = 1.sp, modifier = Modifier.padding(start = 8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    BuiltinCard("Mi auto", "4 × 2", Glyphs.car, Color(0xFF8FD3FF), Color(0xFF2A8AF0), !hasVehicle) { state.addBuiltin(HomeType.VEHICLE) }
                     BuiltinCard("Música", "4 × 2", Glyphs.music, Color(0xFFFF8FA8), Color(0xFFF0284F), !hasMusic) { state.addBuiltin(HomeType.MUSIC) }
                     BuiltinCard("Teléfono", "2 × 2", Glyphs.iphone, Color(0xFF7CF08F), Color(0xFF22B84A), !hasPhone) { state.addBuiltin(HomeType.PHONE) }
                     BuiltinCard("Personalizar", "1 × 1", Glyphs.customize, Color(0xFFA8B8FF), Color(0xFF4A5BD8), !hasSettings) { state.addBuiltin(HomeType.SETTINGS) }
@@ -297,7 +300,7 @@ private fun WidgetPicker(state: LauncherState) {
 private fun BuiltinCard(title: String, size: String, glyph: ImageVector, top: Color, bottom: Color, enabled: Boolean, onClick: () -> Unit) {
     Row(
         Modifier
-            .width(296.dp)
+            .width(216.dp)
             .clip(RoundedCornerShape(22.dp))
             .background(Color.White.copy(alpha = if (enabled) 0.12f else 0.05f))
             .combinedClickableSimple(remember { MutableInteractionSource() }) { if (enabled) onClick() }

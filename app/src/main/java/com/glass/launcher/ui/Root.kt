@@ -10,6 +10,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -52,9 +58,25 @@ fun GlassRoot(state: LauncherState) {
         if (wp != null) {
             Image(wp.full, contentDescription = null, contentScale = ContentScale.FillBounds, modifier = Modifier.fillMaxSize())
         }
-        if (rootSize.width > 0) {
+        // Degradado suave detrás de la barra del sistema transparente, para que sus iconos se lean bien
+        if (state.barMode == "transparent") {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .windowInsetsTopHeight(WindowInsets.systemBars)
+                    .background(Brush.verticalGradient(listOf(Color(0x66050614), Color(0x00050614))))
+            )
+        }
+        var contentSize by remember { mutableStateOf(IntSize.Zero) }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .onSizeChanged { contentSize = it }
+        ) {
+        if (rootSize.width > 0 && contentSize.width > 0) {
             // Escala la interfaz para que se vea igual con cualquier densidad de pantalla
-            val scale = min(rootSize.width / DESIGN_W, rootSize.height / DESIGN_H)
+            val scale = min(contentSize.width / DESIGN_W, contentSize.height / DESIGN_H)
             val backdrop = wp?.let { Backdrop(it.blurred, rootSize.width.toFloat(), rootSize.height.toFloat()) }
             CompositionLocalProvider(
                 LocalDensity provides Density(scale, 1f),
@@ -80,6 +102,7 @@ fun GlassRoot(state: LauncherState) {
                 }
                 SheetHost(state)
             }
+        }
         }
     }
 }

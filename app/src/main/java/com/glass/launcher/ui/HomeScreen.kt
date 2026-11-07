@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
@@ -72,7 +74,7 @@ fun HomeScreen(state: LauncherState) {
     Column(
         Modifier
             .fillMaxSize()
-            .padding(start = 36.dp, end = 36.dp, top = 28.dp, bottom = 24.dp),
+            .padding(start = 36.dp, end = 36.dp, top = if (state.barMode == "hidden") 28.dp else 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         TopRow(state)
@@ -115,8 +117,8 @@ private fun TopRow(state: LauncherState) {
         verticalAlignment = Alignment.Top,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Txt(time, 116.sp, FontWeight.SemiBold, letterSpacing = (-5).sp, shadow = true, lineHeight = 112.sp)
-            Txt(date, 23.sp, FontWeight.Medium, shadow = true, modifier = Modifier.padding(start = 6.dp))
+            Txt(time, 100.sp, FontWeight.SemiBold, letterSpacing = (-4).sp, shadow = true, lineHeight = 98.sp)
+            Txt(date, 22.sp, FontWeight.Medium, shadow = true, modifier = Modifier.padding(start = 6.dp))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             val w = weather
@@ -134,7 +136,8 @@ private fun TopRow(state: LauncherState) {
                     Txt("${w.tempC}°", 19.sp, FontWeight.SemiBold)
                 }
             }
-            Row(
+            // Con la barra del sistema visible, sus propios iconos ya muestran BT/WiFi
+            if (state.barMode == "hidden") Row(
                 Modifier
                     .height(54.dp)
                     .glass(RoundedCornerShape(27.dp), elevation = 8.dp)
@@ -222,6 +225,7 @@ private fun HomeItemView(state: LauncherState, item: HomeItem) {
     when (item.type) {
         HomeType.MUSIC -> MusicWidget(state, onLongPress = menu)
         HomeType.PHONE -> PhoneWidget(state, onLongPress = menu)
+        HomeType.VEHICLE -> VehicleCard(state, onLongPress = menu)
         HomeType.SETTINGS -> {
             val interaction = remember { MutableInteractionSource() }
             val scale = rememberPressScale(interaction)
@@ -344,3 +348,77 @@ fun PhoneWidget(state: LauncherState, onLongPress: () -> Unit) {
         }
     }
 }
+
+// ---------------------------------------------------------------- Tarjeta "Mi auto"
+
+@Composable
+fun VehicleCard(state: LauncherState, onLongPress: () -> Unit) {
+    val context = LocalContext.current
+    val photo by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, state.vehicleVersion) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            com.glass.launcher.data.Vehicle.load(context)?.asImageBitmap()
+        }
+    }
+    val greeting by produceState(com.glass.launcher.data.Vehicle.greeting()) {
+        while (true) {
+            value = com.glass.launcher.data.Vehicle.greeting()
+            delay(60_000L)
+        }
+    }
+    val shape = RoundedCornerShape(38.dp)
+    val interaction = remember { MutableInteractionSource() }
+    BoxWithConstraints(
+        Modifier
+            .fillMaxSize()
+            .glass(shape)
+            .clip(shape)
+            .combinedClickableLong(
+                interaction,
+                onClick = { state.screen = com.glass.launcher.Screen.SETTINGS },
+                onLongClick = onLongPress,
+            )
+    ) {
+        val w = maxWidth
+        // Brillo azul bajo el auto
+        Box(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = 60.dp)
+                .width(w)
+                .height(170.dp)
+                .background(
+                    androidx.compose.ui.graphics.Brush.radialGradient(
+                        listOf(Color(0x5978A0FF), Color.Transparent)
+                    )
+                )
+        )
+        Column(Modifier.padding(start = 26.dp, top = 22.dp, end = 26.dp)) {
+            Txt("$greeting,", 18.sp, FontWeight.SemiBold, color = GlassColors.textDim)
+            Txt(
+                state.userName.ifBlank { "Conductor" }, 36.sp, FontWeight.Bold,
+                letterSpacing = (-0.5).sp, shadow = true,
+            )
+        }
+        val img = photo
+        if (img != null) {
+            androidx.compose.foundation.Image(
+                img,
+                contentDescription = "Tu vehículo",
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 4.dp, bottom = 2.dp)
+                    .width(w * 0.61f)
+                    .androidx_aspect(img.width.toFloat() / img.height.coerceAtLeast(1)),
+            )
+        }
+        Column(Modifier.align(Alignment.BottomStart).padding(start = 26.dp, bottom = 22.dp)) {
+            Txt("MI AUTO", 13.sp, FontWeight.SemiBold, color = GlassColors.textDim, letterSpacing = 0.6.sp)
+            Spacer(Modifier.height(4.dp))
+            Txt(state.vehicleName, 17.sp, FontWeight.SemiBold, shadow = true, modifier = Modifier.width(w * 0.36f))
+        }
+    }
+}
+
+private fun Modifier.androidx_aspect(ratio: Float): Modifier =
+    this.then(Modifier.aspectRatio(if (ratio > 0f) ratio else 1.5f))

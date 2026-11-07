@@ -90,6 +90,8 @@ object Glyphs {
     val image = build("image", s("M6 4h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"), s("M3 16l5-5 4 4 3-3 6 6"))
     val home = build("home", s("M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"))
     val dock = build("dock", s("M6 15h12a3 3 0 0 1 3 3v0a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v0a3 3 0 0 1 3-3zM8 4h8v7H8z"))
+    val car = build("car", s("M5 15.5l1.6-5a2 2 0 0 1 1.9-1.4h7a2 2 0 0 1 1.9 1.4l1.6 5"), s("M4.5 15.5h15a1 1 0 0 1 1 1v2.5h-17v-2.5a1 1 0 0 1 1-1z"), f(circle(7.5f, 19.5f, 1.6f)), f(circle(16.5f, 19.5f, 1.6f)))
+    val user = build("user", s(circle(12f, 8f, 4f)), s("M4.5 20.5a7.5 7.5 0 0 1 15 0"))
     val close = build("close", s("M6 6l12 12M18 6L6 18", 2.4f))
 }
 

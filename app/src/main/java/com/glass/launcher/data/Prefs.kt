@@ -28,9 +28,23 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("artwork_wifi_only", true)
         set(v) = sp.edit().putBoolean("artwork_wifi_only", v).apply()
 
-    var immersive: Boolean
-        get() = sp.getBoolean("immersive", false)
-        set(v) = sp.edit().putBoolean("immersive", v).apply()
+    /** "transparent", "hidden" o "normal". */
+    var barMode: String
+        get() = sp.getString("bar_mode", null) ?: if (sp.getBoolean("immersive", false)) "hidden" else "transparent"
+        set(v) = sp.edit().putString("bar_mode", v).apply()
+
+    var userName: String
+        get() = sp.getString("user_name", "Jorge") ?: "Jorge"
+        set(v) = sp.edit().putString("user_name", v).apply()
+
+    var vehicleName: String
+        get() = sp.getString("vehicle_name", "Aveo 2007") ?: "Aveo 2007"
+        set(v) = sp.edit().putString("vehicle_name", v).apply()
+
+    /** Para añadir la tarjeta "Mi auto" una sola vez en instalaciones previas. */
+    var vehicleCardAdded: Boolean
+        get() = sp.getBoolean("vehicle_card_added", false)
+        set(v) = sp.edit().putBoolean("vehicle_card_added", v).apply()
 
     var initialized: Boolean
         get() = sp.getBoolean("initialized", false)

@@ -20,6 +20,7 @@ import com.glass.launcher.data.NetworkMonitor
 import com.glass.launcher.data.PhoneRepository
 import com.glass.launcher.data.Prefs
 import com.glass.launcher.data.WallpaperImages
+import com.glass.launcher.data.Vehicle
 import com.glass.launcher.data.Wallpapers
 import com.glass.launcher.data.WeatherRepository
 import com.glass.launcher.icons.IconPackManager
@@ -92,7 +93,14 @@ class LauncherState(private val context: Context) {
         private set
     var artworkWifiOnly by mutableStateOf(prefs.artworkWifiOnly)
         private set
-    var immersive by mutableStateOf(prefs.immersive)
+    var barMode by mutableStateOf(prefs.barMode)
+        private set
+    var userName by mutableStateOf(prefs.userName)
+        private set
+    var vehicleName by mutableStateOf(prefs.vehicleName)
+        private set
+    /** Cambia cuando el usuario pone otra foto del vehículo. */
+    var vehicleVersion by mutableIntStateOf(0)
         private set
     var iconOverrides by mutableStateOf(prefs.loadIconOverrides())
         private set
@@ -110,6 +118,15 @@ class LauncherState(private val context: Context) {
         if (!prefs.initialized && apps.apps.value.isNotEmpty()) {
             createDefaults()
             prefs.initialized = true
+            prefs.vehicleCardAdded = true
+        }
+        if (prefs.initialized && !prefs.vehicleCardAdded) {
+            // Instalaciones anteriores: añadir la tarjeta "Mi auto" al principio
+            if (home.none { it.type == HomeType.VEHICLE }) {
+                home.add(0, newItem(HomeType.VEHICLE, cols = 4, rows = 2))
+                saveHome()
+            }
+            prefs.vehicleCardAdded = true
         }
         icons.invalidate()
     }
@@ -136,6 +153,7 @@ class LauncherState(private val context: Context) {
         prefs.saveDock(newDock)
 
         val items = mutableListOf(
+            newItem(HomeType.VEHICLE, cols = 4, rows = 2),
             newItem(HomeType.MUSIC, cols = 4, rows = 2),
             newItem(HomeType.PHONE, cols = 2, rows = 2),
         )
@@ -199,6 +217,7 @@ class LauncherState(private val context: Context) {
         val item = when (type) {
             HomeType.MUSIC -> newItem(type, cols = 4, rows = 2)
             HomeType.PHONE -> newItem(type, cols = 2, rows = 2)
+            HomeType.VEHICLE -> newItem(type, cols = 4, rows = 2)
             else -> newItem(type)
         }
         home.add(item)
@@ -330,9 +349,31 @@ class LauncherState(private val context: Context) {
         media.onArtworkSettingsChanged()
     }
 
-    fun toggleImmersive() {
-        immersive = !immersive
-        prefs.immersive = immersive
+    fun chooseBarMode(mode: String) {
+        barMode = mode
+        prefs.barMode = mode
+    }
+
+    fun changeUserName(name: String) {
+        userName = name
+        prefs.userName = name
+    }
+
+    fun changeVehicleName(name: String) {
+        vehicleName = name
+        prefs.vehicleName = name
+    }
+
+    fun setVehiclePhoto(uri: Uri) {
+        scope.launch {
+            val ok = withContext(Dispatchers.IO) { Vehicle.savePhoto(context, uri) }
+            if (ok) vehicleVersion++ else toast("No se pudo usar esa imagen")
+        }
+    }
+
+    fun resetVehiclePhoto() {
+        Vehicle.photoFile(context).delete()
+        vehicleVersion++
     }
 
     fun openDefaultLauncherSettings() {
